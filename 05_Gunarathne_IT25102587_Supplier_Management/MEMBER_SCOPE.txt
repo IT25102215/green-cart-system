@@ -1,0 +1,17 @@
+GREEN CART - MEMBER CODE SPLIT
+
+Member: Gunarathne B.K.P.R
+Student ID: IT25102587
+Assigned Use Case: Supplier Management
+
+This ZIP was prepared from the supplied GreenCart-Final Viva project and split according to the supplied Sequence Diagram Report.
+
+PRIMARY RESPONSIBILITY
+- Feature controller(s): SupplierManagementController.java
+- Design pattern package: src/main/java/com/greencart/designpattern/member5supplier
+- Relevant UI/template files are included.
+
+IMPORTANT
+Some entity/service/repository/shared classes are included because the member's primary files directly or indirectly depend on them. These shared dependency files may therefore appear in more than one member ZIP. No source code was modified.
+
+Java files included: 12
