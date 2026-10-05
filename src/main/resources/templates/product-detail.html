@@ -1,0 +1,28 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${product.name}+' — Green Cart')}"></head><body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<div class="container my-5">
+  <div class="row g-5">
+    <div class="col-md-6"><img th:src="${product.image}" class="img-fluid rounded-4 shadow"></div>
+    <div class="col-md-6">
+      <small class="text-muted" th:text="${product.category != null ? product.category.name : ''}"></small>
+      <h1 class="fw-bold" th:text="${product.name}"></h1>
+      <p class="lead text-muted" th:text="${product.description}"></p>
+      <div class="d-flex align-items-center gap-3 my-3">
+        <span class="price fs-2">Rs. <span th:text="${#numbers.formatDecimal(product.finalPrice,1,2)}"></span></span>
+        <span th:if="${product.onSale}" class="text-muted text-decoration-line-through">Rs. <span th:text="${#numbers.formatDecimal(product.price,1,2)}"></span></span>
+        <span th:if="${product.onSale}" class="badge-discount" th:text="|-${product.discount.stripTrailingZeros().toPlainString()}%|"></span>
+        <span class="badge bg-success" th:if="${product.inStock}">In Stock</span>
+        <span class="badge bg-danger" th:unless="${product.inStock}">Out of Stock</span>
+      </div>
+      <form th:action="@{/cart/add/{id}(id=${product.id})}" method="post" class="d-flex gap-2 mt-4" data-cart-add-form>
+        <input type="hidden" name="mode" value="set">
+        <input type="number" name="qty" value="1" min="1" th:max="${product.stock}" class="form-control rounded-pill" style="max-width:100px" th:disabled="${!product.inStock}">
+        <button class="btn-fresh" th:disabled="${!product.inStock}"><i class="bi bi-cart-plus"></i> <span th:text="${product.inStock ? 'Add to Cart' : 'Unavailable'}">Add to Cart</span></button>
+      </form>
+    </div>
+  </div>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer><div th:replace="~{fragments/layout :: scripts}"></div>
+</body></html>
