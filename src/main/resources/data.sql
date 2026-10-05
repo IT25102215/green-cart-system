@@ -343,22 +343,23 @@ DROP TRIGGER IF EXISTS trg_order_insert;
 CREATE TRIGGER trg_order_insert
 AFTER INSERT ON orders
 FOR EACH ROW
-INSERT INTO order_audit_log(order_id, action, message)
-VALUES (NEW.id, 'INSERT', CONCAT('New order #', NEW.id, ' created with status ', NEW.status));
+INSERT INTO order_audit_log(order_id, action, message, created_at)
+VALUES (NEW.id, 'INSERT', CONCAT('New order #', NEW.id, ' created with status ', NEW.status), CURRENT_TIMESTAMP(6));
 
 DROP TRIGGER IF EXISTS trg_order_status_update;
 CREATE TRIGGER trg_order_status_update
 AFTER UPDATE ON orders
 FOR EACH ROW
-INSERT INTO order_audit_log(order_id, action, message)
+INSERT INTO order_audit_log(order_id, action, message, created_at)
 SELECT NEW.id,
        'STATUS_CHANGE',
-       CONCAT('Order #', NEW.id, ' status changed from ', OLD.status, ' to ', NEW.status)
+       CONCAT('Order #', NEW.id, ' status changed from ', OLD.status, ' to ', NEW.status),
+       CURRENT_TIMESTAMP(6)
 WHERE NOT (OLD.status <=> NEW.status);
 
 DROP TRIGGER IF EXISTS trg_order_delete;
 CREATE TRIGGER trg_order_delete
 BEFORE DELETE ON orders
 FOR EACH ROW
-INSERT INTO order_audit_log(order_id, action, message)
-VALUES (OLD.id, 'DELETE', CONCAT('Order #', OLD.id, ' deleted'));
+INSERT INTO order_audit_log(order_id, action, message, created_at)
+VALUES (OLD.id, 'DELETE', CONCAT('Order #', OLD.id, ' deleted'), CURRENT_TIMESTAMP(6));
