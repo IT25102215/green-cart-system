@@ -1,0 +1,10 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Payment Cancelled')}"></head><body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div class="container my-5"><div class="auth-card text-center">
+  <i class="bi bi-x-circle-fill text-warning" style="font-size:5rem"></i>
+  <h2 class="fw-bold mt-3">Payment Cancelled</h2>
+  <a th:href="@{/cart}" class="btn-fresh">Back to Cart</a>
+</div></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body></html>

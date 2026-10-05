@@ -1,0 +1,88 @@
+<div th:fragment="sidebar" class="gc-admin-sidebar-shell" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+  <button class="gc-admin-menu-toggle" type="button" id="gcAdminMenuToggle" aria-controls="gcAdminSidebar" aria-expanded="false">
+    <i class="bi bi-list"></i><span>Management Menu</span>
+  </button>
+  <button class="gc-admin-sidebar-backdrop" type="button" id="gcAdminSidebarBackdrop" aria-label="Close management menu"></button>
+
+  <aside class="sidebar" id="gcAdminSidebar">
+    <div class="gc-sidebar-brand">
+      <div class="gc-sidebar-brand-icon"><i class="bi bi-shield-check"></i></div>
+      <div>
+        <strong>Management</strong>
+        <small>Green Cart Console</small>
+      </div>
+      <button type="button" class="gc-sidebar-close" id="gcAdminSidebarClose" aria-label="Close menu"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <nav class="gc-sidebar-nav" aria-label="Management navigation">
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER','ORDER_ADMIN','SUPPLIER_MANAGER','FEEDBACK_ADMIN')">Overview</div>
+      <a th:href="@{/admin/dashboard}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER','ORDER_ADMIN','SUPPLIER_MANAGER','FEEDBACK_ADMIN')"
+         th:classappend="${currentPath.startsWith('/admin/dashboard')} ? ' active' : ''">
+        <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER')">Catalog</div>
+      <a th:href="@{/admin/products}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER')"
+         th:classappend="${currentPath.startsWith('/admin/products')} ? ' active' : ''">
+        <i class="bi bi-box-seam"></i><span>Products</span>
+      </a>
+      <a th:href="@{/admin/inventory/report}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER')"
+         th:classappend="${currentPath.startsWith('/admin/inventory')} ? ' active' : ''">
+        <i class="bi bi-clipboard-data"></i><span>Inventory Report</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','ORDER_ADMIN')">Orders</div>
+      <a th:href="@{/admin/orders}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','ORDER_ADMIN')"
+         th:classappend="${currentPath.startsWith('/admin/orders')} ? ' active' : ''">
+        <i class="bi bi-bag-check"></i><span>Orders</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','DELIVERY_MANAGER')">Delivery Operations</div>
+      <a th:href="@{/admin/deliveries}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','DELIVERY_MANAGER')"
+         th:classappend="${currentPath.startsWith('/admin/deliveries')} ? ' active' : ''">
+        <i class="bi bi-truck"></i><span>Delivery Manager</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','SUPPLIER_MANAGER')">Supply</div>
+      <a th:href="@{/admin/suppliers}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','SUPPLIER_MANAGER')"
+         th:classappend="${currentPath.startsWith('/admin/suppliers')} ? ' active' : ''">
+        <i class="bi bi-building"></i><span>Suppliers</span>
+      </a>
+      <a th:href="@{/admin/purchase-orders}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','SUPPLIER_MANAGER')"
+         th:classappend="${currentPath.startsWith('/admin/purchase-orders')} ? ' active' : ''">
+        <i class="bi bi-clipboard-check"></i><span>Purchase Orders</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','FEEDBACK_ADMIN')">Customer Care</div>
+      <a th:href="@{/admin/feedback}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','FEEDBACK_ADMIN')"
+         th:classappend="${currentPath.startsWith('/admin/feedback')} ? ' active' : ''">
+        <i class="bi bi-chat-dots"></i><span>Customer Support</span>
+      </a>
+      <a th:href="@{/admin/reviews}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','FEEDBACK_ADMIN')"
+         th:classappend="${currentPath.startsWith('/admin/reviews')} ? ' active' : ''">
+        <i class="bi bi-star"></i><span>Order Reviews</span>
+      </a>
+      <a th:href="@{/admin/site-reviews}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','FEEDBACK_ADMIN')"
+         th:classappend="${currentPath.startsWith('/admin/site-reviews')} ? ' active' : ''">
+        <i class="bi bi-chat-heart"></i><span>Site Reviews</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER')">Administration</div>
+      <a th:href="@{/admin/users}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER')"
+         th:classappend="${currentPath.startsWith('/admin/users')} ? ' active' : ''">
+        <i class="bi bi-people"></i><span>Users</span>
+      </a>
+      <a th:href="@{/admin/income}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER')"
+         th:classappend="${currentPath.startsWith('/admin/income')} ? ' active' : ''">
+        <i class="bi bi-cash-coin"></i><span>Income</span>
+      </a>
+      <a th:href="@{/admin/audit-logs}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER')"
+         th:classappend="${currentPath.startsWith('/admin/audit-logs')} ? ' active' : ''">
+        <i class="bi bi-journal-text"></i><span>Audit Logs</span>
+      </a>
+
+      <div class="gc-sidebar-section" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER','ORDER_ADMIN','SUPPLIER_MANAGER','FEEDBACK_ADMIN')">Store</div>
+      <a th:href="@{/admin/visit-site}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER','PRODUCT_MANAGER','ORDER_ADMIN','SUPPLIER_MANAGER','FEEDBACK_ADMIN')"><i class="bi bi-shop"></i><span>Customer Site</span><i class="bi bi-arrow-up-right ms-auto gc-sidebar-external"></i></a>
+    </nav>
+  </aside>
+</div>
