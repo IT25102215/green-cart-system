@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Delivery Management — Green Cart')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2 p-0 gc-admin-sidebar-col"><div th:replace="~{admin/_sidebar :: sidebar}"></div></div>
+
+    <main class="col-md-10 p-4 gc-admin-content-col">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="fw-bold mb-1">Delivery Management</h1>
+          <p class="text-muted mb-0">Assign multiple orders per staff member with a configurable active-delivery capacity.</p>
+        </div>
+        <a class="btn-fresh text-decoration-none" th:href="@{/admin/dashboard}" sec:authorize="hasAnyRole('ADMIN','BUSINESS_OWNER')">Dashboard</a>
+        <span class="badge rounded-pill text-bg-success px-3 py-2" sec:authorize="hasRole('DELIVERY_MANAGER')"><i class="bi bi-person-badge me-1"></i> Delivery Manager Console</span>
+      </div>
+
+      <div class="gc-panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-person-plus"></i> Add Delivery Staff</h5>
+            <p class="text-muted small mb-0">Create a delivery-person login and link the staff member to a vehicle.</p>
+          </div>
+          <span class="badge bg-light text-dark border">Managed by Delivery Manager</span>
+        </div>
+        <form method="post" th:action="@{/admin/deliveries/staff/create}" class="row g-3">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <div class="col-lg-4 col-md-6"><label class="form-label fw-semibold">Full Name *</label><input name="fullName" class="form-control" minlength="2" maxlength="100" placeholder="e.g. Ravindu Silva" required></div>
+          <div class="col-lg-4 col-md-6"><label class="form-label fw-semibold">Email *</label><input name="email" type="email" class="form-control" maxlength="254" placeholder="ravindu.delivery@greencart.com" required></div>
+          <div class="col-lg-4 col-md-6"><label class="form-label fw-semibold">Phone *</label><input name="phone" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="0771234567" required></div>
+          <div class="col-lg-4 col-md-6"><label class="form-label fw-semibold">Temporary Password *</label><input name="password" type="password" class="form-control" minlength="8" placeholder="Upper/lower/number/symbol" required><small class="text-muted">At least 8 characters with upper, lower, number and special character.</small></div>
+          <div class="col-lg-4 col-md-6"><label class="form-label fw-semibold">Vehicle Number *</label><input name="vehicleNumber" class="form-control text-uppercase" minlength="3" maxlength="30" placeholder="WP-ABC-1234" required></div>
+          <div class="col-lg-2 col-md-3"><label class="form-label fw-semibold">Capacity *</label><input name="maxActiveOrders" type="number" class="form-control" min="1" max="20" value="5" required></div>
+          <div class="col-lg-2 col-md-3 d-flex align-items-end"><button type="submit" class="btn-fresh w-100"><i class="bi bi-person-plus-fill"></i> Add Staff</button></div>
+        </form>
+      </div>
+
+      <div class="gc-panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-people"></i> Delivery Staff Workload</h5>
+          <span class="text-muted small">Default maximum: 5 active orders per staff member</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Staff</th><th>Vehicle</th><th>Active</th><th>Max Capacity</th><th>Status</th><th>Change Capacity</th><th>Manage</th></tr></thead>
+            <tbody>
+              <tr th:each="s : ${deliveryPeople}">
+                <td>
+                  <strong th:text="${s.user.fullName}"></strong>
+                  <small class="d-block text-muted" th:text="${s.user.email}"></small>
+                  <small class="d-block text-muted" th:text="${s.user.phone}"></small>
+                </td>
+                <td th:text="${s.vehicleNumber}"></td>
+                <td><span class="badge bg-primary" th:text="|${staffActiveCounts[s.id]} active|"></span></td>
+                <td th:text="${s.maxActiveOrders}"></td>
+                <td>
+                  <span th:if="${!s.user.enabled}" class="badge bg-secondary">DISABLED</span>
+                  <span th:if="${s.user.enabled}" class="badge" th:classappend="${staffActiveCounts[s.id] >= s.maxActiveOrders ? ' bg-danger' : (staffActiveCounts[s.id] > 0 ? ' bg-warning text-dark' : ' bg-success')}" th:text="${staffActiveCounts[s.id] >= s.maxActiveOrders ? 'FULL' : (staffActiveCounts[s.id] > 0 ? 'ON DUTY' : 'AVAILABLE')}"></span>
+                </td>
+                <td>
+                  <form method="post" th:action="@{/admin/deliveries/staff/{id}/capacity(id=${s.id})}" class="d-flex gap-2">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="number" name="maxActiveOrders" min="1" max="20" th:value="${s.maxActiveOrders}" class="form-control form-control-sm" style="max-width:82px" th:disabled="${!s.user.enabled}" required>
+                    <button class="btn btn-sm btn-outline-success" th:disabled="${!s.user.enabled}">Save</button>
+                  </form>
+                </td>
+                <td class="text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" th:data-bs-target="|#editStaff${s.id}|"><i class="bi bi-pencil"></i> Edit</button>
+                  <form method="post" th:action="@{/admin/deliveries/staff/{id}/remove(id=${s.id})}" class="d-inline"
+                        data-confirm="This delivery staff account will be removed. Completed delivery records will be kept, but the staff login will be deleted."
+                        data-confirm-title="Remove delivery staff?">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-person-x"></i> Remove</button>
+                  </form>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(deliveryPeople)}"><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-people fs-3 d-block mb-2"></i>No delivery staff have been added yet. Use the form above to create your first staff account.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-truck"></i> Assign Order to Delivery Staff</h5>
+        <div th:if="${#lists.isEmpty(orders)}" class="alert alert-info rounded-4 mb-2">No approved orders are waiting for assignment.</div>
+        <div th:if="${#lists.isEmpty(deliveryPeople)}" class="alert alert-warning rounded-4 mb-2">No delivery staff profile exists yet.</div>
+
+        <form th:unless="${#lists.isEmpty(orders) or #lists.isEmpty(deliveryPeople)}"
+              method="post" th:action="@{/admin/deliveries/assign}" class="row g-3">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <div class="col-lg-5">
+            <label class="form-label">Order</label>
+            <select name="orderId" class="form-select" required>
+              <option value="">Select an approved order</option>
+              <option th:each="o : ${orders}" th:value="${o.id}"
+                      th:text="|#${o.id} — ${o.user != null ? o.user.fullName : 'Customer'} — Rs. ${o.total}|">
+              </option>
+            </select>
+          </div>
+          <div class="col-lg-4">
+            <label class="form-label">Delivery Staff</label>
+            <select name="deliveryStaffId" class="form-select" required>
+              <option value="">Select delivery staff</option>
+              <option th:each="s : ${deliveryPeople}" th:value="${s.id}"
+                      th:disabled="${!s.user.enabled or staffActiveCounts[s.id] >= s.maxActiveOrders}"
+                      th:text="|${s.user.fullName} — ${s.vehicleNumber} — ${staffActiveCounts[s.id]}/${s.maxActiveOrders} active|">
+              </option>
+            </select>
+            <small class="text-muted">Staff can receive multiple orders until their active-delivery capacity is reached.</small>
+          </div>
+          <div class="col-lg-3 d-flex align-items-end">
+            <button class="btn-fresh w-100" type="submit"><i class="bi bi-person-check"></i> Assign Delivery</button>
+          </div>
+        </form>
+
+      </div>
+
+      <div class="glass p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h5 class="fw-bold mb-0">All Deliveries</h5>
+          <span class="badge bg-success-subtle text-success border">Capacity-controlled multiple assignments</span>
+        </div>
+
+        <form method="get" th:action="@{/admin/deliveries}" class="gc-filter-bar row g-2 align-items-end mb-3">
+          <div class="col-md-4"><label class="form-label small fw-semibold">Search</label><input name="q" th:value="${q}" class="form-control" placeholder="Customer, staff or address"></div>
+          <div class="col-md-3"><label class="form-label small fw-semibold">Status</label><select name="status" class="form-select"><option value="">All statuses</option><option th:each="s : ${T(com.greencart.entity.DeliveryStatus).values()}" th:value="${s}" th:text="${s}" th:selected="${selectedDeliveryStatus == s}"></option></select></div>
+          <div class="col-md-3"><label class="form-label small fw-semibold">Staff</label><select name="staffId" class="form-select"><option value="">All staff</option><option th:each="s : ${deliveryPeople}" th:value="${s.id}" th:text="${s.user.fullName}" th:selected="${selectedStaffId != null and selectedStaffId == s.id}"></option></select></div>
+          <div class="col-md-2 d-grid"><button class="btn btn-success">Filter</button></div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Order</th><th>Customer</th><th>Delivery Staff</th><th>Status</th><th>Issue / Reschedule</th><th>Update</th></tr></thead>
+            <tbody>
+            <tr th:each="d : ${deliveries}">
+              <td th:text="|#${d.order.id}|">#1</td>
+              <td style="min-width:280px"><strong th:text="${d.order.user != null ? d.order.user.fullName : 'Customer'}"></strong><small class="d-block text-muted" th:text="${d.order.address}"></small><div class="small mt-1"><strong>Note:</strong> <span th:text="${d.order.deliveryNotes != null ? d.order.deliveryNotes : 'No delivery note'}"></span></div><form method="post" th:action="@{/admin/deliveries/orders/{orderId}/note(orderId=${d.order.id})}" class="d-flex gap-1 mt-2"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><input name="deliveryNotes" maxlength="500" class="form-control form-control-sm" th:value="${d.order.deliveryNotes}" placeholder="Delivery note"><button class="btn btn-sm btn-outline-secondary">Save</button></form></td>
+              <td style="min-width:290px">
+                <div th:if="${d.deliveryStaff != null}">
+                  <strong class="d-block" th:text="${d.deliveryStaff.user.fullName}"></strong>
+                  <small class="text-muted d-block" th:text="${d.deliveryStaff.user.email}"></small>
+                  <small class="text-muted d-block" th:text="|Vehicle: ${d.deliveryStaff.vehicleNumber} • Active: ${staffActiveCounts[d.deliveryStaff.id]}/${d.deliveryStaff.maxActiveOrders}|" ></small>
+                  <span class="badge mt-1" th:classappend="${d.deliveryStaff.availabilityStatus == 'ON_DUTY' ? ' bg-primary' : ' bg-success'}" th:text="${d.deliveryStaff.availabilityStatus}"></span>
+                </div>
+                <span th:unless="${d.deliveryStaff != null}" class="text-muted">Unassigned</span>
+
+                <form th:if="${d.order.status.name() == 'CONFIRMED' and (d.status.name() == 'ASSIGNED' or d.status.name() == 'FAILED')}"
+                      method="post" th:action="@{/admin/deliveries/{id}/reassign(id=${d.id})}" class="mt-2">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <div class="input-group input-group-sm">
+                    <select name="deliveryStaffId" class="form-select" required>
+                      <option value="">Change staff...</option>
+                      <option th:each="s : ${deliveryPeople}" th:value="${s.id}"
+                              th:selected="${d.deliveryStaff != null and s.id == d.deliveryStaff.id}"
+                              th:disabled="${!s.user.enabled or ((d.deliveryStaff == null or s.id != d.deliveryStaff.id) and staffActiveCounts[s.id] >= s.maxActiveOrders)}"
+                              th:text="|${s.user.fullName} — ${staffActiveCounts[s.id]}/${s.maxActiveOrders} active|">
+                      </option>
+                    </select>
+                    <button class="btn btn-outline-primary" type="submit">Reassign</button>
+                  </div>
+                </form>
+              </td>
+              <td><span class="gc-status-badge" th:classappend="${d.status.name() == 'DELIVERED' ? ' status-delivered' : (d.status.name() == 'FAILED' ? ' status-cancelled' : ((d.status.name() == 'DELAYED' or d.status.name() == 'RESCHEDULED') ? ' status-pending' : (d.status.name() == 'ASSIGNED' ? ' status-confirmed' : ' status-shipped')))}"><span class="gc-status-dot"></span><span th:text="${d.status}"></span></span></td>
+              <td>
+                <small th:if="${d.problem != null && !d.problem.isBlank()}" class="text-danger d-block" th:text="${d.problem}"></small>
+                <small th:if="${d.rescheduledFor != null}" class="text-muted d-block" th:text="|Rescheduled: ${#temporals.format(d.rescheduledFor,'yyyy-MM-dd HH:mm')}|"></small>
+                <span th:if="${(d.problem == null or d.problem.isBlank()) and d.rescheduledFor == null}">-</span>
+              </td>
+              <td style="min-width:390px">
+                <form method="post" th:action="@{/admin/deliveries/{id}/status(id=${d.id})}" class="row g-2">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <div class="col-md-4"><select name="status" class="form-select form-select-sm" required><option th:each="s : ${T(com.greencart.entity.DeliveryStatus).values()}" th:value="${s}" th:text="${s}" th:selected="${s == d.status}"></option></select></div>
+                  <div class="col-md-4"><input name="problem" class="form-control form-control-sm" placeholder="Delay/failure reason" th:value="${d.problem}"></div>
+                  <div class="col-md-4"><input name="rescheduledFor" type="datetime-local" class="form-control form-control-sm" th:value="${d.rescheduledFor != null ? d.rescheduledFor : ''}"></div>
+                  <div class="col-12"><button class="btn btn-sm btn-success" type="submit">Save Delivery Update</button></div>
+                </form>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(deliveries)}"><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-truck fs-2 d-block mb-2"></i>No deliveries match the selected filters.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <nav th:if="${totalPages > 1}" class="mt-3">
+          <ul class="pagination gc-pagination justify-content-center mb-0">
+            <li class="page-item" th:classappend="${page == 0} ? 'disabled'"><a class="page-link" th:href="@{/admin/deliveries(page=${page-1},q=${q},status=${selectedDeliveryStatus},staffId=${selectedStaffId})}">Previous</a></li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0,totalPages-1)}" th:classappend="${i == page} ? 'active'"><a class="page-link" th:href="@{/admin/deliveries(page=${i},q=${q},status=${selectedDeliveryStatus},staffId=${selectedStaffId})}" th:text="${i+1}"></a></li>
+            <li class="page-item" th:classappend="${page + 1 >= totalPages} ? 'disabled'"><a class="page-link" th:href="@{/admin/deliveries(page=${page+1},q=${q},status=${selectedDeliveryStatus},staffId=${selectedStaffId})}">Next</a></li>
+          </ul>
+        </nav>
+      </div>
+    </main>
+  </div>
+</div>
+<div th:each="s : ${deliveryPeople}" class="modal fade" th:id="|editStaff${s.id}|" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <form method="post" th:action="@{/admin/deliveries/staff/{id}/edit(id=${s.id})}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <div class="modal-header"><div><h5 class="modal-title fw-bold">Edit Delivery Staff</h5><small class="text-muted" th:text="|Staff #${s.id}|"></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label fw-semibold">Full Name</label><input name="fullName" class="form-control" th:value="${s.user.fullName}" minlength="2" maxlength="100" required></div>
+          <div class="mb-3"><label class="form-label fw-semibold">Email</label><input name="email" type="email" class="form-control" th:value="${s.user.email}" maxlength="254" required></div>
+          <div class="mb-3"><label class="form-label fw-semibold">Phone</label><input name="phone" class="form-control" th:value="${s.user.phone}" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required></div>
+          <div><label class="form-label fw-semibold">Vehicle Number</label><input name="vehicleNumber" class="form-control text-uppercase" th:value="${s.vehicleNumber}" minlength="3" maxlength="30" required></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i class="bi bi-check2"></i> Save Changes</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

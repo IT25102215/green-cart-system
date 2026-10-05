@@ -1,0 +1,86 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Orders')}"></head><body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<div class="container my-5">
+  <h1 class="fw-bold mb-2">My Orders</h1>
+  <p class="text-muted mb-4">View order details, track delivery progress, cancel pending orders, or reorder delivered purchases.</p>
+
+  <div th:if="${#lists.isEmpty(orders)}" class="glass p-5 text-center text-muted">
+    <i class="bi bi-bag fs-1 d-block mb-2"></i>No orders yet.
+  </div>
+
+  <div class="glass p-3" th:unless="${#lists.isEmpty(orders)}">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+        <th:block th:each="o : ${orders}" th:with="d=${deliveryMap[o.id]}">
+          <tr>
+            <td class="fw-bold" th:text="|#${o.id}|"></td>
+            <td th:text="${#temporals.format(o.createdAt,'yyyy-MM-dd HH:mm')}"></td>
+            <td th:text="${o.items.size()}"></td>
+            <td>Rs. <span th:text="${#numbers.formatDecimal(o.total,1,2)}"></span></td>
+            <td><span class="badge bg-secondary" th:text="|${o.paymentMethod} / ${o.paymentStatus}|"></span></td>
+            <td><span class="gc-status-badge" th:classappend="${o.status.name() == 'PENDING' ? ' status-pending' : (o.status.name() == 'CONFIRMED' ? ' status-confirmed' : (o.status.name() == 'SHIPPED' ? ' status-shipped' : (o.status.name() == 'DELIVERED' ? ' status-delivered' : ' status-cancelled')))}"><span class="gc-status-dot"></span><span th:text="${o.status}"></span></span></td>
+            <td class="text-nowrap">
+              <a th:href="@{/orders/{id}(id=${o.id})}" class="btn btn-sm btn-outline-dark rounded-pill me-1"><i class="bi bi-receipt"></i> Details</a>
+              <a th:href="@{/user/deliveries(orderId=${o.id})}" class="btn btn-sm btn-outline-success rounded-pill me-1">Track</a>
+
+              <button th:if="${o.status == T(com.greencart.entity.OrderStatus).PENDING}"
+                      type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                      data-bs-toggle="modal" th:data-bs-target="|#cancelOrderModal${o.id}|">Cancel</button>
+
+              <form th:if="${o.status == T(com.greencart.entity.OrderStatus).DELIVERED}"
+                    th:action="@{/orders/{id}/reorder(id=${o.id})}" method="post" class="d-inline ms-1">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button class="btn btn-sm btn-success rounded-pill"><i class="bi bi-arrow-repeat"></i> Reorder</button>
+              </form>
+            </td>
+          </tr>
+
+          <tr class="border-0">
+            <td colspan="7" class="pt-0 pb-4 border-0">
+              <div th:if="${o.status.name() == 'CANCELLED'}" class="alert alert-danger py-2 mb-0 rounded-4">
+                <i class="bi bi-x-circle me-1"></i>
+                <strong>Cancelled</strong>
+                <span th:if="${o.cancellationReason != null}" th:text="| — ${o.cancellationReason}|"></span>
+              </div>
+              <div th:unless="${o.status.name() == 'CANCELLED'}" class="overflow-auto px-2">
+                <div class="gc-order-timeline">
+                  <div class="gc-order-step done"><span>Order Placed</span></div>
+                  <div class="gc-order-step" th:classappend="${o.status.name() != 'PENDING' ? 'done' : 'current'}"><span>Confirmed</span></div>
+                  <div class="gc-order-step" th:classappend="${d != null and (d.status.name() == 'PICKED_UP' or d.status.name() == 'OUT_FOR_DELIVERY' or d.status.name() == 'DELAYED' or d.status.name() == 'RESCHEDULED' or d.status.name() == 'DELIVERED') ? 'done' : (o.status.name() == 'CONFIRMED' ? 'current' : '')}"><span>Picked Up</span></div>
+                  <div class="gc-order-step" th:classappend="${d != null and (d.status.name() == 'OUT_FOR_DELIVERY' or d.status.name() == 'DELAYED' or d.status.name() == 'RESCHEDULED' or d.status.name() == 'DELIVERED') ? 'done' : (d != null and d.status.name() == 'PICKED_UP' ? 'current' : '')}"><span>Out for Delivery</span></div>
+                  <div class="gc-order-step" th:classappend="${o.status.name() == 'DELIVERED' ? 'done' : (o.status.name() == 'SHIPPED' ? 'current' : '')}"><span>Delivered</span></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+        </th:block>
+        </tbody>
+      </table>
+    <th:block th:each="o : ${orders}">
+      <div class="modal fade" th:id="|cancelOrderModal${o.id}|" tabindex="-1" th:if="${o.status == T(com.greencart.entity.OrderStatus).PENDING}">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content rounded-4 border-0 shadow">
+            <form th:action="@{/orders/{id}/cancel(id=${o.id})}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <div class="modal-header"><h5 class="modal-title">Cancel Order #<span th:text="${o.id}"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+              <div class="modal-body">
+            <p class="text-muted">Only pending orders can be cancelled. Reserved stock will be returned automatically.</p>
+            <label class="form-label fw-semibold">Cancellation reason</label>
+            <textarea name="cancellationReason" class="form-control" rows="4" minlength="3" maxlength="500" required placeholder="Tell us why you want to cancel this order"></textarea>
+              </div>
+              <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Order</button><button type="submit" class="btn btn-danger">Cancel Order</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </th:block>
+    </div>
+  </div>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer><div th:replace="~{fragments/layout :: scripts}"></div>
+</body></html>

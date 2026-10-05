@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Delivery Tracking — Green Cart')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-2">
+    <div>
+      <h1 class="fw-bold mb-1">Track Your Orders</h1>
+      <p class="text-muted mb-0">Order placed → Admin approval → Delivery progress.</p>
+    </div>
+    <a th:href="@{/orders}" class="btn btn-outline-success rounded-pill">My Orders</a>
+  </div>
+
+  <div th:if="${#lists.isEmpty(orders)}" class="glass p-5 text-center text-muted">
+    No orders to track yet.
+  </div>
+
+  <div th:each="o : ${orders}"
+       class="glass p-4 mb-4"
+       th:classappend="${highlightOrderId != null and highlightOrderId == o.id} ? ' tracking-highlight' : ''">
+
+    <div th:with="d=${deliveryMap[o.id]}">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h4 class="mb-1">Order #<span th:text="${o.id}"></span></h4>
+          <small class="text-muted" th:text="${#temporals.format(o.createdAt,'yyyy-MM-dd HH:mm')}"></small>
+        </div>
+        <span class="gc-status-badge gc-status-badge-lg"
+              th:classappend="${o.status.name() == 'PENDING' ? ' status-pending' :
+                               (o.status.name() == 'CONFIRMED' ? ' status-confirmed' :
+                               (o.status.name() == 'SHIPPED' ? ' status-shipped' :
+                               (o.status.name() == 'DELIVERED' ? ' status-delivered' : ' status-cancelled')))}">
+          <span class="gc-status-dot"></span><span th:text="${o.status}"></span>
+        </span>
+      </div>
+
+      <div th:if="${o.status.name() == 'PENDING'}" class="alert alert-warning rounded-4 mt-3 mb-0">
+        <i class="bi bi-hourglass-split"></i>
+        Your order is waiting for administrator approval.
+      </div>
+
+      <div th:if="${o.status.name() == 'CONFIRMED' and (d == null or d.deliveryStaff == null)}"
+           class="alert alert-info rounded-4 mt-3 mb-0">
+        <i class="bi bi-check-circle"></i>
+        Your order has been approved and is being prepared for delivery.
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-4">
+            <small class="text-muted d-block">Order Total</small>
+            <strong>Rs. <span th:text="${#numbers.formatDecimal(o.total,1,2)}"></span></strong>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-4">
+            <small class="text-muted d-block">Delivery Status</small>
+            <strong th:text="${o.status.name() == 'PENDING' ? 'WAITING FOR ADMIN APPROVAL' :
+                              (d != null and d.deliveryStaff != null ? d.status : 'PREPARING FOR DELIVERY')}"></strong>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tracking-timeline mt-4" th:if="${o.status.name() != 'CANCELLED'}">
+        <div class="tracking-step"
+             th:classappend="${o.status.name() != 'CANCELLED'} ? 'done' : ''">
+          <span>1</span><strong>Order Placed</strong>
+        </div>
+
+        <div class="tracking-step"
+             th:classappend="${o.status.name() == 'CONFIRMED' or o.status.name() == 'SHIPPED' or o.status.name() == 'DELIVERED'} ? 'done' : ''">
+          <span>2</span><strong>Admin Approved</strong>
+        </div>
+
+        <div class="tracking-step"
+             th:classappend="${d != null and (d.status.name() == 'PICKED_UP' or d.status.name() == 'OUT_FOR_DELIVERY' or d.status.name() == 'DELAYED' or d.status.name() == 'RESCHEDULED' or d.status.name() == 'DELIVERED')} ? 'done' : ''">
+          <span>3</span><strong>Picked Up</strong>
+        </div>
+
+        <div class="tracking-step"
+             th:classappend="${d != null and (d.status.name() == 'OUT_FOR_DELIVERY' or d.status.name() == 'DELAYED' or d.status.name() == 'RESCHEDULED' or d.status.name() == 'DELIVERED')} ? 'done' : ''">
+          <span>4</span><strong>Out for Delivery</strong>
+        </div>
+
+        <div class="tracking-step"
+             th:classappend="${o.status.name() == 'DELIVERED' or (d != null and d.status.name() == 'DELIVERED')} ? 'done' : ''">
+          <span>5</span><strong>Delivered</strong>
+        </div>
+      </div>
+
+      <div th:if="${o.status.name() == 'CANCELLED'}" class="alert alert-danger rounded-4 mt-3 mb-0">
+        <i class="bi bi-x-circle"></i>
+        This order was cancelled and is no longer in the delivery workflow.
+      </div>
+
+      <div th:if="${d != null and d.status.name() == 'DELAYED'}"
+           class="alert alert-warning rounded-4 mt-3 mb-0">
+        <i class="bi bi-clock-history"></i>
+        Delivery delayed:
+        <span th:text="${d.problem != null ? d.problem : 'Our delivery team reported a delay.'}"></span>
+      </div>
+
+      <div th:if="${d != null and d.status.name() == 'RESCHEDULED'}"
+           class="alert alert-info rounded-4 mt-3 mb-0">
+        <i class="bi bi-calendar-event"></i>
+        Delivery rescheduled
+        <span th:if="${d.rescheduledFor != null}"
+              th:text="|to ${#temporals.format(d.rescheduledFor,'yyyy-MM-dd HH:mm')}|"></span>.
+        <span th:if="${d.problem != null && !d.problem.isBlank()}" th:text="${d.problem}"></span>
+      </div>
+
+      <div th:if="${d != null and d.status.name() == 'FAILED'}"
+           class="alert alert-danger rounded-4 mt-3 mb-0">
+        <i class="bi bi-exclamation-triangle"></i>
+        Delivery failed:
+        <span th:text="${d.problem != null ? d.problem : 'Our delivery team reported a problem.'}"></span>
+        <span class="d-block mt-1">The order has been returned to the delivery queue.</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
