@@ -1,0 +1,37 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Profile')}"></head><body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="glass p-4">
+        <h4>Profile</h4>
+        <div class="text-center my-3">
+          <img th:src="${user.profileImage != null ? user.profileImage : 'https://ui-avatars.com/api/?name='+user.fullName+'&background=16a34a&color=fff'}" class="rounded-circle" style="width:120px;height:120px;object-fit:cover">
+        </div>
+        <form th:action="@{/profile}" method="post" enctype="multipart/form-data">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <div class="mb-3"><label>Full name</label><input name="fullName" class="form-control rounded-pill" th:value="${user.fullName}" required></div>
+          <div class="mb-3"><label>Phone</label><input name="phone" class="form-control rounded-pill" th:value="${user.phone}" type="tel" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" required title="Enter exactly 10 digits" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" placeholder="07XXXXXXXX"></div>
+          <div class="mb-3"><label>Address</label><input name="address" class="form-control rounded-pill" th:value="${user.address}" required minlength="5" maxlength="255"><div class="form-text">Used as your default delivery address at checkout.</div></div>
+          <div class="mb-3"><label>Profile picture</label><input type="file" name="profileImage" class="form-control" accept="image/*"></div>
+          <button class="btn-fresh w-100">Save</button>
+        </form>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass p-4">
+        <h4>Change Password</h4>
+        <form th:action="@{/profile/password}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <div class="mb-3"><label>Current password</label><input type="password" name="oldPassword" class="form-control rounded-pill" required></div>
+          <div class="mb-3"><label>New password</label><input type="password" name="newPassword" class="form-control rounded-pill" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="At least 8 characters with uppercase, lowercase, number and special character"></div>
+          <div class="form-text mb-3">Use at least 8 characters with uppercase, lowercase, number and special character.</div><button class="btn-warm w-100">Update password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer><div th:replace="~{fragments/layout :: scripts}"></div>
+</body></html>

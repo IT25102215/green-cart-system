@@ -1,0 +1,38 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Reviews')}" ></head><body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div><h1 class="fw-bold mb-1"><i class="bi bi-star-fill text-warning me-2"></i>My Reviews</h1><p class="text-muted mb-0">Rate delivered orders and manage the reviews you have submitted.</p></div>
+    <div class="d-flex flex-wrap gap-2">
+      <a th:href="@{/my-account}" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-person me-1"></i> My Account</a>
+      <a th:href="@{/orders}" class="btn btn-outline-success rounded-pill"><i class="bi bi-receipt me-1"></i> My Orders</a>
+    </div>
+  </div>
+  <div class="glass p-4 mb-4" th:if="${!#lists.isEmpty(availableOrders)}">
+    <h5 class="fw-bold mb-2"><i class="bi bi-star-fill text-warning"></i> Review a Delivered Order</h5><p class="text-muted small mb-3"><i class="bi bi-shield-check me-1"></i>Only orders with <strong>DELIVERED</strong> status can be reviewed.</p>
+    <form th:action="@{/reviews}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="row g-3">
+        <div class="col-md-5"><label class="form-label">Order</label><select name="orderId" class="form-select" required><option value="">Select an order</option><option th:each="o : ${availableOrders}" th:value="${o.id}" th:text="|Order #${o.id} — Rs. ${o.total}|">Order</option></select></div>
+        <div class="col-md-3"><label class="form-label">Rating</label><select name="rating" class="form-select" required><option value="5">★★★★★ — 5</option><option value="4">★★★★ — 4</option><option value="3">★★★ — 3</option><option value="2">★★ — 2</option><option value="1">★ — 1</option></select></div>
+        <div class="col-12"><label class="form-label">Your review</label><textarea name="comment" class="form-control rounded-4" rows="4" placeholder="Tell us what you think about your order..." required></textarea></div>
+        <div class="col-12"><button class="btn-fresh" type="submit"><i class="bi bi-send"></i> Submit Review</button></div>
+      </div>
+    </form>
+  </div>
+  <div class="glass p-4 mb-4 text-center text-muted" th:if="${#lists.isEmpty(availableOrders) and #lists.isEmpty(reviews)}">
+    <i class="bi bi-star fs-1 d-block mb-2"></i>No delivered orders are available for review yet. A review can be submitted only after an order is delivered.
+  </div>
+  <h5 class="fw-bold mb-3" th:if="${!#lists.isEmpty(reviews)}">Your Submitted Reviews</h5>
+  <div class="row g-3">
+    <div class="col-md-6" th:each="r : ${reviews}"><div class="review-card h-100">
+      <div class="d-flex justify-content-between align-items-start"><div class="star mb-2"><i th:each="i : ${#numbers.sequence(1,r.rating)}" class="bi bi-star-fill"></i></div><small class="text-muted" th:if="${r.order != null}" th:text="|Order #${r.order.id}|">Order</small></div>
+      <p th:text="${r.comment}"></p><small class="text-muted" th:text="${#temporals.format(r.createdAt,'yyyy-MM-dd HH:mm')}"></small>
+      <form th:action="@{/reviews/{id}/delete(id=${r.id})}" method="post" class="mt-3"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="btn btn-sm btn-outline-danger">Remove</button></form>
+    </div></div>
+  </div>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer><div th:replace="~{fragments/layout :: scripts}"></div>
+</body></html>

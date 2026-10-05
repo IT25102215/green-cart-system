@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Admin — Income')}"></head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container-fluid">
+  <div class="row">
+
+    <div class="col-md-2 p-0 gc-admin-sidebar-col">
+      <div th:replace="~{admin/_sidebar :: sidebar}"></div>
+    </div>
+
+    <div class="col-md-10 p-4 gc-admin-content-col">
+
+      <h1 class="fw-bold">Income Reports</h1>
+
+      <div class="row g-4 mt-2">
+
+        <div class="col-md-3">
+          <div class="stat-card">
+            <small>Daily Income</small>
+            <div class="num">
+              Rs. 
+              <span th:text="${#numbers.formatDecimal(daily,1,2)}"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card warm">
+            <small>Weekly Income</small>
+            <div class="num">
+              Rs. 
+              <span th:text="${#numbers.formatDecimal(weekly,1,2)}"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card blue">
+            <small>Monthly Income</small>
+            <div class="num">
+              Rs. 
+              <span th:text="${#numbers.formatDecimal(monthly,1,2)}"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="stat-card">
+            <small>Total Income</small>
+            <div class="num">
+              Rs. 
+              <span th:text="${#numbers.formatDecimal(total,1,2)}"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="glass p-4 mt-4">
+        <canvas id="c" height="80"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+
+  const daily = [[${daily != null ? daily : 0}]];
+  const weekly = [[${weekly != null ? weekly : 0}]];
+  const monthly = [[${monthly != null ? monthly : 0}]];
+  const total = [[${total != null ? total : 0}]];
+
+  new Chart(document.getElementById('c'), {
+      type: 'line',
+      data: {
+          labels: ['Daily Income', 'Weekly Income', 'Monthly Income', 'Total Income'],
+          datasets: [{
+              label: 'Revenue',
+              data: [daily, weekly, monthly, total],
+              borderColor: '#16a34a',
+              backgroundColor: 'rgba(34,197,94,.2)',
+              tension: 0.4,
+              fill: true
+          }]
+      }
+  });
+
+</script>
+
+</body>
+</html>
